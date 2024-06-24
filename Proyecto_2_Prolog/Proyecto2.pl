@@ -16,7 +16,7 @@ validar_conexiones([H | T]):-                                       %   Recibe u
 
 validar_zombies([]):- !.                                            %   Condici처n de parada.
 validar_zombies([H | T]):-                                          %   Recibe una lista de posiciones.
-    conectado(H, _) \= false; conectado(_, H) \= false,             %   Se valida que el elemento exista en el laberinto usando el predicado conectado().
+%   \+ (conectado(H, _); conectado(_, H)),                          %   Se valida que el elemento exista en el laberinto usando el predicado conectado().
     asserta(zombie(H)),                                             %   Se guarda en la base de conocimiento el predicado zombie(H).
     validar_zombies(T).                                             %   Llamada recursiva con el siguiente elemento de la lista.
 
@@ -24,7 +24,7 @@ validar_suministros([]):- !.                                        %   Condici�
 validar_suministros([H | T]):-                                      %   Recibe una lista de listas que contienen el nombre de un suministro y la posici처n.
     H = [H1 | T1],                                                  %   Se separa la lista, en H se tiene el nombre y T1 es una lista con la posici처n.
     T1 = [X | _],                                                   %   Se obtiene la posici처n del suministro.
-    zombie(X) \= false,                                             %   Se valida que no exista un zombie en la posici처n obtenida.
+    \+ zombie(X),                                                   %   Se valida que no exista un zombie en la posici처n obtenida.
     asserta(suministro(H1, X)),                                     %   Se guarda en la base de conocimiento el predicado suministro(H1, X).
     validar_suministros(T).                                         %   Llamada recursiva para el siguiente elemento de la lista de listas.
 
@@ -32,6 +32,6 @@ validar_supervivientes([]):- !.                                     %   Condici�
 validar_supervivientes([H | T]):-                                   %   Recibe una lista de listas, que contienen el nombre y posici처n de un superviviente.
     H = [H1 | T1],                                                  %   Sabemos que el primer elemento es una lista con el nombre del superviviente (H1).
     T1 = [X | _],                                                   %   T1 es una lista de la que obtendremos la posici처n del superviviente.
-    zombie(X) \= false, suministro(_, X) \= false,                  %   Se valida que no haya ni un zombie, ni un suministro en la posici처n 
+    \+ (zombie(X); suministro(_, X)),                               %   Se valida que no haya ni un zombie, ni un suministro en la posici처n 
     asserta(superviviente(H1, X)),                                  %   Se almacena en la base de conocimiento el predicado superviviente(H1, X).
     validar_supervivientes(T).                                      %   Llamada recursiva para el siguiente elemento en la lista de listas.
