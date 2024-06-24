@@ -1,59 +1,37 @@
-/**
- * *Acá estaba definiendo lo que yo considero deben ser los predicados base, es decir:
- *
- * ! conectado debe unificar dadas 2 ubicaciones, si ambas son iguales debería fallar porque se
- * ! entiende ya que una posición del laberinto está conectada consigo misma. 
-
-conectado(Begin,End):-
-    Begin \= End.
-
- * ! zombie debe unificar dada cualquier posición, ya que se evalua primero que suministro() y superviviente(),
- * ! sin embargo, por validación agregué que es true si la posición dada no unifica para ningún suministro ni superviviente.
-
-zombie(PositionZ):-
-    \+ suministro(_, PositionZ),
-    \+ superviviente(_, PositionZ).
-
-
- * ! suministro no debe unificar si ya hay un Zombie o un superviviente en la posicion dada
-
-suministro(Name, PositionS):-
-    \+ zombie(PositionS),
-    \+ superviviente(_, PositionS).
-
-
- * ! superviviente no debe unificar si ya hay un zombie o un suministro en la posicion dada
-
-superviviente(Name, PositionSp):-
-    \+ suministro(_, PositionSp),
-    \+ zombie(PositionSp).
-
-    * * Toda esta sección está comentada porque al momento de evaluar "generar_laberinto()" obtuve el error: 
-    * * "No permission to modify static procedure", ya que el "assert()" modifica los predicados definidos aca arriba
-    * * Los predicados acá definidos funcionan por si solos pero no con "generar_laberinto" y viceversa.
-*/
-
-/**
- * ? La regla generar_laberinto tal cual está acá definida almacena en la base de conocimiento los valores dados,
- * ? el problema viene porque no valida nada, solo almacena, por tanto se tiene la respuesta true en casos inválidos.
- 
- * ? Posible solución: En lugar de hacer el asserta, se debe guardar el resultado de evaluar los predicados y no 
- * ? el predicado en si, de esa forma no se modifican los predicados ya definidos.
-
- * ? Otra posible solución sería hacer las validaciones en generar_laberinto antes de hacer los asserta().
-
-*/
+lista_vacia([]).
 
 generar_laberinto(Conexiones, Zombies, Suministros, Supervivientes):-
-    length(Conexiones, LenC),
-    LenC > 0,    
-    forall(member([B, E], Conexiones), asserta(conectado(B, E))),
-    length(Zombies, LenZ),
-    LenZ > 0,
-    forall(member(Z, Zombies), asserta(zombie(Z))),
-    length(Suministros, LenS),
-    LenS > 0,
-    forall(member([S, P], Suministros), asserta(suministro(S, P))),
-    length(Supervivientes, LenSp),
-    LenSp > 0,
-    forall(member([Sp, Sp_P], Supervivientes), asserta(superviviente(Sp, Sp_P))).
+    \+ (lista_vacia(Conexiones); lista_vacia(Zombies); lista_vacia(Suministros); lista_vacia(Supervivientes)),
+    validar_conexiones(Conexiones),
+    validar_zombies(Zombies),
+    validar_suministros(Suministros),
+    validar_supervivientes(Supervivientes).
+
+validar_conexiones([]):- !.                                         %   Condición de parada.
+validar_conexiones([H | T]):-                                       %   Recibe una lista de listas, que contienen las 2 posiciones a conectar.
+    H = [H1 | T1],                                                  %   Sabemos entonces que H es una lista con H1 (elemento) y T1 (lista).
+    T1 = [X | _],                                                   %   T1 es una lista tipo [b] asi que obtenemos el elemento y el resto no nos importa.
+    H1 \= X, asserta(conectado(H1, X)),                             %   Se guarda en la base de conocimiento conectado(H1, X), si son diferentes.
+    validar_conexiones(T).                                          %   Llamada recursiva con el siguiente elemento de la lista de listas.
+
+validar_zombies([]):- !.                                            %   Condición de parada.
+validar_zombies([H | T]):-                                          %   Recibe una lista de posiciones.
+    conectado(H, _) \= false; conectado(_, H) \= false,             %   Se valida que el elemento exista en el laberinto usando el predicado conectado().
+    asserta(zombie(H)),                                             %   Se guarda en la base de conocimiento el predicado zombie(H).
+    validar_zombies(T).                                             %   Llamada recursiva con el siguiente elemento de la lista.
+
+validar_suministros([]):- !.                                        %   Condición de parada.
+validar_suministros([H | T]):-                                      %   Recibe una lista de listas que contienen el nombre de un suministro y la posición.
+    H = [H1 | T1],                                                  %   Se separa la lista, en H se tiene el nombre y T1 es una lista con la posición.
+    T1 = [X | _],                                                   %   Se obtiene la posición del suministro.
+    zombie(X) \= false,                                             %   Se valida que no exista un zombie en la posición obtenida.
+    asserta(suministro(H1, X)),                                     %   Se guarda en la base de conocimiento el predicado suministro(H1, X).
+    validar_suministros(T).                                         %   Llamada recursiva para el siguiente elemento de la lista de listas.
+
+validar_supervivientes([]):- !.                                     %   Condición de parada.
+validar_supervivientes([H | T]):-                                   %   Recibe una lista de listas, que contienen el nombre y posición de un superviviente.
+    H = [H1 | T1],                                                  %   Sabemos que el primer elemento es una lista con el nombre del superviviente (H1).
+    T1 = [X | _],                                                   %   T1 es una lista de la que obtendremos la posición del superviviente.
+    zombie(X) \= false, suministro(_, X) \= false,                  %   Se valida que no haya ni un zombie, ni un suministro en la posición 
+    asserta(superviviente(H1, X)),                                  %   Se almacena en la base de conocimiento el predicado superviviente(H1, X).
+    validar_supervivientes(T).                                      %   Llamada recursiva para el siguiente elemento en la lista de listas.
