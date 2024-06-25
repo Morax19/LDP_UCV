@@ -2,7 +2,7 @@
 
 lista_vacia([]).
 
-%--------------------------------        PARTE 1        -------------------------------------------------------------------------------------------------------
+%--------------------------------       PARTE 1         -------------------------------------------------------------------------------------------------------
 
 generar_laberinto(Conexiones, Zombies, Suministros, Supervivientes):-
 %   Limipar base de conocimiento antes  de CUALQUIER iteración de generar_laberinto
@@ -41,28 +41,45 @@ validar_supervivientes([H | T]):-                                   %   Recibe u
     asserta(superviviente(H1, X)),                                  %   Se almacena en la base de conocimiento el predicado superviviente(H1, X).
     validar_supervivientes(T).                                      %   Llamada recursiva para el siguiente elemento en la lista de listas.
 
-%-------------------------------        PARTE 2         -------------------------------------------------------------------------------------------------------
+%---------------------------------      PARTE 2         -------------------------------------------------------------------------------------------------------
 
 camino_seguro(Inicio, Fin, Camino):-                                %   Se recibe un vertice incio del grafo, un vertice fin y se guarda el camino.
     conectado(Inicio, Fin),                                         %   Se verifica si hay una conexión entre los vertices,
     \+ zombie(Fin),                                                 %   Caso base, el inicio está conectado con el fin.
     Camino = [Inicio, Fin], !.                                      %   Se almacena el camino.
 
-camino_seguro(X, Y, [X | Camino]):-                                 %   Se reciben un vertice inicio (X) y de fin (Y), y una lista.
-    conectado(X, Siguiente),                                        %   Acá se hace el backtraking de Prolog con las conexiones de X.
+camino_seguro(Inicio, Fin, [Inicio | Camino]):-                     %   Se reciben un vertice inicio (X) y de fin (Y), y una lista.
+    conectado(Inicio, Siguiente),                                   %   Acá se hace el backtraking de Prolog con las conexiones de X.
     \+ zombie(Siguiente),                                           %   Se valida que en el vértice siguiente no hay zombie.
-    camino_seguro(Siguiente, Y, Camino).                            %   Llamada recursiva para el siguiente.
+    camino_seguro(Siguiente, Fin, Camino).                          %   Llamada recursiva para el siguiente.
 
-%-------------------------------         PARTE 3         ------------------------------------------------------------------------------------------------------
+%-------------------------------        PARTE 3          -------------------------------------------------------------------------------------------------------
 
-/**
-    Paso 1, conexiones
-    Paso 2, preguntar por zombie
-    Paso 3, preguntar por suministro y guardar EN EL ACTUAL.
-    Pase 4, 
+contar_suministro(Contador):-                                       %   Predicado que nos permite contar la cantidad de suministros
+    findall(X, suministro(X, _), ListaSuministro),                  %   que existen en la base de conocimiento. Se retorna una 
+    length(ListaSuministro, Contador).                              %   variable contador que unifica con la cantidad de suministros.
 
-*/
+%---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-contar_suministro(Contador):-
-    findall(X, suministro(X, _), ListaSuministro),
-    length(ListaSuministro, Contador).
+camino_con_suministro_aux(X, Fin, 0, Camino):-                      %   Predicado auxiliar para realizar el backtracking
+    conectado(X, Fin),                                              %   Caso de parada, llegamos al nodo final
+    \+ zombie(Fin),                                                 %   Verificamos que el nodo final sea valido y que tengamos todos los suministros
+    Camino = [X, Fin], !.                                           %   Se retrona el camino para concatenar con los anteriores.
+
+camino_con_suministro_aux(X, Fin, 0, [X | Camino]):-                %    
+    conectado(X, Siguiente),
+    \+ zombie(Siguiente),
+    camino_con_suministro_aux(Siguiente, Fin, 0, Camino).
+
+camino_con_suministro_aux(X, Fin, ContSuministro, [X | Camino]):-
+    conectado(X, Siguiente),
+    \+ zombie(Siguiente),
+    suministro(_, X),
+    ContSuministro = ContSuministro - 1,
+    camino_con_suministro_aux(Siguiente, Fin, ContSuministro, Camino).
+
+camino_con_suministro(Inicio, NombreSuperviviente, Camino):-
+    superviviente(NombreSuperviviente, Fin),                        %   Obtener fin. Ya que la variable unifica con la posicion.
+    conectado(Inicio, Siguiente),
+    contar_suministro(Contador),
+    camino_con_suministro_aux(Inicio, Fin, Contador, Camino).
