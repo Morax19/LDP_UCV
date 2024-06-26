@@ -55,31 +55,24 @@ camino_seguro(Inicio, Fin, [Inicio | Camino]):-                     %   Se recib
 
 %-------------------------------        PARTE 3          -------------------------------------------------------------------------------------------------------
 
+
 contar_suministro(Contador):-                                       %   Predicado que nos permite contar la cantidad de suministros
     findall(X, suministro(X, _), ListaSuministro),                  %   que existen en la base de conocimiento. Se retorna una 
     length(ListaSuministro, Contador).                              %   variable contador que unifica con la cantidad de suministros.
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-camino_con_suministro_aux(X, Fin, 0, Camino):-                      %   Predicado auxiliar para realizar el backtracking
-    conectado(X, Fin),                                              %   Caso de parada, llegamos al nodo final
-    \+ zombie(Fin),                                                 %   Verificamos que el nodo final sea valido y que tengamos todos los suministros
-    Camino = [X, Fin], !.                                           %   Se retrona el camino para concatenar con los anteriores.
 
-camino_con_suministro_aux(X, Fin, 0, [X | Camino]):-                %    
-    conectado(X, Siguiente),
-    \+ zombie(Siguiente),
-    camino_con_suministro_aux(Siguiente, Fin, 0, Camino).
+camino_con_suministro_aux(X, X, 0, Camino):-                     %   Predicado auxiliar para realizar el backtracking                                                 %   Caso de parada, llegamos al nodo final
+   Camino = [X], !.                                              %   Se retrona el camino para concatenar con los anteriores.
 
 camino_con_suministro_aux(X, Fin, ContSuministro, [X | Camino]):-
-    conectado(X, Siguiente),
+    (suministro(_,X) -> ContAux is ContSuministro-1;ContAux is ContSuministro),
+    conectado(X,Siguiente),
     \+ zombie(Siguiente),
-    suministro(_, X),
-    ContSuministro = ContSuministro - 1,
-    camino_con_suministro_aux(Siguiente, Fin, ContSuministro, Camino).
-
+    camino_con_suministro_aux(Siguiente,Fin,ContAux,Camino),!.
+    
 camino_con_suministro(Inicio, NombreSuperviviente, Camino):-
-    superviviente(NombreSuperviviente, Fin),                        %   Obtener fin. Ya que la variable unifica con la posicion.
-    conectado(Inicio, Siguiente),
+    superviviente(NombreSuperviviente, Fin),                            %   Obtener fin. Ya que la variable unifica con la posicion.
     contar_suministro(Contador),
     camino_con_suministro_aux(Inicio, Fin, Contador, Camino).
