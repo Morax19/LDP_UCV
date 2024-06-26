@@ -65,7 +65,7 @@ contar_suministro(Contador):-                                       %   Predicad
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-camino_con_suministro(Inicio, NombreSuperviviente, Camino):-        %    Predicado base definido en el enunciado.
+camino_con_suministros(Inicio, NombreSuperviviente, Camino):-        %    Predicado base definido en el enunciado.
     superviviente(NombreSuperviviente, Fin),                        %    Obtener posición del superviviente, ya que la variable unifica con la posicion.
     contar_suministro(Contador),                                    %    Se obtiene la cantidad de registros existentes en el laberinto.
     camino_con_suministro_aux(Inicio, Fin, Contador, Camino).       %    Llamada al predicado encargado de realizar el backtracking.
