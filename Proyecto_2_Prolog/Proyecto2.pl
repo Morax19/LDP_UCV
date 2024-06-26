@@ -5,6 +5,7 @@ lista_vacia([]).
 %--------------------------------       PARTE 1         -------------------------------------------------------------------------------------------------------
 
 generar_laberinto(Conexiones, Zombies, Suministros, Supervivientes):-
+    
 %   Limipar base de conocimiento antes  de CUALQUIER iteración de generar_laberinto
     \+ (lista_vacia(Conexiones); lista_vacia(Zombies); lista_vacia(Suministros); lista_vacia(Supervivientes)),
     validar_conexiones(Conexiones),
