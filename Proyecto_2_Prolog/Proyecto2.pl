@@ -2,11 +2,13 @@
 
 lista_vacia([]).
 
+limipar_base():-
+    retractall(conectado(_,_)), retractall(zombie(_)), retractall(suministro(_,_)), retractall(superviviente(_,_)).
+    
 %--------------------------------       PARTE 1         -------------------------------------------------------------------------------------------------------
 
 generar_laberinto(Conexiones, Zombies, Suministros, Supervivientes):-
-    
-%   Limipar base de conocimiento antes  de CUALQUIER iteración de generar_laberinto
+    limipar_base(),
     \+ (lista_vacia(Conexiones); lista_vacia(Zombies); lista_vacia(Suministros); lista_vacia(Supervivientes)),
     validar_conexiones(Conexiones),
     validar_zombies(Zombies),
@@ -63,17 +65,18 @@ contar_suministro(Contador):-                                       %   Predicad
 
 %---------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+camino_con_suministros(Inicio, NombreSuperviviente, Camino):-        %    Predicado base definido en el enunciado.
+    superviviente(NombreSuperviviente, Fin),                        %    Obtener posición del superviviente, ya que la variable unifica con la posicion.
+    contar_suministro(Contador),                                    %    Se obtiene la cantidad de registros existentes en el laberinto.
+    camino_con_suministro_aux(Inicio, Fin, Contador, Camino).       %    Llamada al predicado encargado de realizar el backtracking.
 
-camino_con_suministro_aux(X, X, 0, Camino):-                     %   Predicado auxiliar para realizar el backtracking                                                 %   Caso de parada, llegamos al nodo final
-   Camino = [X], !.                                              %   Se retrona el camino para concatenar con los anteriores.
+camino_con_suministro_aux(X, X, 0, Camino):-                         %   Caso de parada, llegamos al nodo final
+   Camino = [X], !.                                                  %   Se retrona el camino para concatenar con los anteriores.
 
-camino_con_suministro_aux(X, Fin, ContSuministro, [X | Camino]):-
-    (suministro(_,X) -> ContAux is ContSuministro-1;ContAux is ContSuministro),
-    conectado(X,Siguiente),
-    \+ zombie(Siguiente),
-    camino_con_suministro_aux(Siguiente,Fin,ContAux,Camino),!.
+camino_con_suministro_aux(X, Fin, ContSuministro, [X | Camino]):-                   %    Predicado en el que se hacen el backtracking.
+    (suministro(_,X) -> ContAux is ContSuministro-1;ContAux is ContSuministro),     %    Se revisa si en la posición actual hay un suministro y se actualiza el contador.
+    conectado(X,Siguiente),                                                         %    Se obtiene el nodo siguiente.
+    \+ zombie(Siguiente),                                                           %    Se valida que en dicho nodo no haya un zombie.
+    camino_con_suministro_aux(Siguiente,Fin,ContAux,Camino),!.                      %    Llamada recursiva.
     
-camino_con_suministro(Inicio, NombreSuperviviente, Camino):-
-    superviviente(NombreSuperviviente, Fin),                            %   Obtener fin. Ya que la variable unifica con la posicion.
-    contar_suministro(Contador),
-    camino_con_suministro_aux(Inicio, Fin, Contador, Camino).
+
